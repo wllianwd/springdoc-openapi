@@ -29,6 +29,7 @@ import java.util.Optional;
 
 import org.springdoc.core.configuration.SpringDocConfiguration;
 import org.springdoc.core.customizers.ParameterCustomizer;
+import org.springdoc.core.customizers.SpringDocApiDocsPathCustomizer;
 import org.springdoc.core.customizers.SpringDocCustomizers;
 import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
 import org.springdoc.core.parsers.ReturnTypeParser;
@@ -42,6 +43,7 @@ import org.springdoc.core.service.GenericResponseService;
 import org.springdoc.core.service.OpenAPIService;
 import org.springdoc.core.service.OperationService;
 import org.springdoc.core.service.RequestBodyService;
+import org.springdoc.core.utils.Constants;
 import org.springdoc.core.utils.PropertyResolverUtils;
 import org.springdoc.webmvc.api.OpenApiActuatorResource;
 import org.springdoc.webmvc.api.OpenApiWebMvcResource;
@@ -67,11 +69,18 @@ import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
+import org.springframework.web.servlet.function.RouterFunctions;
+import org.springframework.web.servlet.function.ServerResponse;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import static org.springdoc.core.utils.Constants.APPLICATION_OPENAPI_YAML;
 import static org.springdoc.core.utils.Constants.SPRINGDOC_ENABLED;
+import static org.springdoc.core.utils.Constants.SPRINGDOC_ENABLE_DEFAULT_API_DOCS;
 import static org.springdoc.core.utils.SpringDocUtils.getConfig;
 
 /**
@@ -113,6 +122,40 @@ public class SpringDocWebMvcConfiguration {
 		return new OpenApiWebMvcResource(openAPIBuilderObjectFactory, requestBuilder,
 				responseBuilder, operationParser,  springDocConfigProperties, springDocProviders, springDocCustomizers);
 	}
+
+    /**
+     * Request builder request builder.
+     *
+     * @param openApiWebMvcResource                 the openApiWebMvcResource
+     * @param springDocConfigProperties             the springDocConfigProperties
+     * @param springDocApiDocsPathCustomizer        the springDocApiDocsPathCustomizer
+     * @return the router function with both json and yaml routes with the customizer applied, if present
+     */
+    @ConditionalOnProperty(name = SPRINGDOC_ENABLE_DEFAULT_API_DOCS, havingValue = "true", matchIfMissing = true)
+    @Bean
+    @Lazy(false)
+    RouterFunction<ServerResponse> openApiResourceRoute(
+        OpenApiWebMvcResource openApiWebMvcResource,
+        SpringDocConfigProperties springDocConfigProperties,
+        Optional<SpringDocApiDocsPathCustomizer> springDocApiDocsPathCustomizer
+    )
+    {
+        String apiDocsPath = springDocApiDocsPathCustomizer.isPresent() ?
+            springDocApiDocsPathCustomizer.get().customize(springDocConfigProperties.getApiDocs().getPath()) :
+            springDocConfigProperties.getApiDocs().getPath();
+        String apiDocsPathYaml = apiDocsPath + Constants.DOT + Constants.YAML;
+        return RouterFunctions.route(
+            RequestPredicates.GET(apiDocsPath),
+            request -> ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(openApiWebMvcResource.openapiJson(request.servletRequest(), apiDocsPath, request.servletRequest().getLocale()))
+        ).andRoute(
+            RequestPredicates.GET(apiDocsPathYaml),
+            request -> ServerResponse.ok()
+                .header(HttpHeaders.CONTENT_TYPE, APPLICATION_OPENAPI_YAML)
+                .body(openApiWebMvcResource.openapiYaml(request.servletRequest(), apiDocsPathYaml, request.servletRequest().getLocale()))
+        );
+    }
 
 	/**
 	 * Request builder request builder.

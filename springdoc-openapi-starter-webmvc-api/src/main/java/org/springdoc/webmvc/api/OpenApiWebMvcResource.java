@@ -28,7 +28,6 @@ import java.util.Locale;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.springdoc.core.customizers.SpringDocCustomizers;
@@ -41,24 +40,15 @@ import org.springdoc.core.service.OpenAPIService;
 import org.springdoc.core.service.OperationService;
 
 import org.springframework.beans.factory.ObjectFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import static org.springdoc.core.utils.Constants.API_DOCS_URL;
-import static org.springdoc.core.utils.Constants.APPLICATION_OPENAPI_YAML;
 import static org.springdoc.core.utils.Constants.DEFAULT_API_DOCS_URL_YAML;
-import static org.springdoc.core.utils.Constants.SPRINGDOC_ENABLE_DEFAULT_API_DOCS;
 
 /**
  * The type Open api resource.
  * @author bnasslahsen
  */
-@RestController
-@ConditionalOnProperty(name = SPRINGDOC_ENABLE_DEFAULT_API_DOCS, havingValue = "true", matchIfMissing = true)
 public class OpenApiWebMvcResource extends OpenApiResource {
 
 	/**
@@ -74,9 +64,9 @@ public class OpenApiWebMvcResource extends OpenApiResource {
 	 * @param springDocCustomizers the spring doc customizers
 	 */
 	public OpenApiWebMvcResource(String groupName, ObjectFactory<OpenAPIService> openAPIBuilderObjectFactory, AbstractRequestService requestBuilder,
-			GenericResponseService responseBuilder, OperationService operationParser,
-			SpringDocConfigProperties springDocConfigProperties, SpringDocProviders springDocProviders,
-			SpringDocCustomizers springDocCustomizers) {
+		GenericResponseService responseBuilder, OperationService operationParser,
+		SpringDocConfigProperties springDocConfigProperties, SpringDocProviders springDocProviders,
+		SpringDocCustomizers springDocCustomizers) {
 		super(groupName, openAPIBuilderObjectFactory, requestBuilder, responseBuilder, operationParser, springDocConfigProperties, springDocProviders,springDocCustomizers);
 	}
 
@@ -91,9 +81,8 @@ public class OpenApiWebMvcResource extends OpenApiResource {
 	 * @param springDocProviders the spring doc providers
 	 * @param springDocCustomizers the spring doc customizers
 	 */
-	@Autowired
 	public OpenApiWebMvcResource(ObjectFactory<OpenAPIService> openAPIBuilderObjectFactory, AbstractRequestService requestBuilder, GenericResponseService responseBuilder,
-			OperationService operationParser, SpringDocConfigProperties springDocConfigProperties, SpringDocProviders springDocProviders,  SpringDocCustomizers springDocCustomizers) {
+		OperationService operationParser, SpringDocConfigProperties springDocConfigProperties, SpringDocProviders springDocProviders,  SpringDocCustomizers springDocCustomizers) {
 		super(openAPIBuilderObjectFactory, requestBuilder, responseBuilder, operationParser,  springDocConfigProperties, springDocProviders, springDocCustomizers);
 	}
 
@@ -106,11 +95,9 @@ public class OpenApiWebMvcResource extends OpenApiResource {
 	 * @return the string
 	 * @throws JsonProcessingException the json processing exception
 	 */
-	@Operation(hidden = true)
-	@GetMapping(value = API_DOCS_URL, produces = MediaType.APPLICATION_JSON_VALUE)
 	@Override
 	public byte[] openapiJson(HttpServletRequest request, @Value(API_DOCS_URL) String apiDocsUrl, Locale locale)
-			throws JsonProcessingException {
+		throws JsonProcessingException {
 		return super.openapiJson(request, apiDocsUrl, locale);
 	}
 
@@ -123,11 +110,9 @@ public class OpenApiWebMvcResource extends OpenApiResource {
 	 * @return the string
 	 * @throws JsonProcessingException the json processing exception
 	 */
-	@Operation(hidden = true)
-	@GetMapping(value = DEFAULT_API_DOCS_URL_YAML, produces = APPLICATION_OPENAPI_YAML)
 	@Override
 	public byte[] openapiYaml(HttpServletRequest request, @Value(DEFAULT_API_DOCS_URL_YAML) String apiDocsUrl, Locale locale)
-			throws JsonProcessingException {
+		throws JsonProcessingException {
 		return super.openapiYaml(request, apiDocsUrl, locale);
 	}
 
